@@ -1,0 +1,54 @@
+﻿<Properties>
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\RTS\Verticle.cs">
+    <Files>
+      <File FileName="Assets\WorldObject\Building\MeshManager.cs" Line="469" Column="14" />
+      <File FileName="Assets\RTS\Verticle.cs" Line="300" Column="8" />
+      <File FileName="Assets\WorldObject\Building\Building.cs" Line="188" Column="19" />
+      <File FileName="Assets\RTS\WorkManager.cs" Line="52" Column="40" />
+      <File FileName="Assets\RTS\Enums.cs" Line="4" Column="27" />
+      <File FileName="Assets\WorldObject\WorldObject.cs" Line="78" Column="1" />
+      <File FileName="Assets\Player\HUD\HUD.cs" Line="286" Column="26" />
+    </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State expanded="True">
+          <Node name="Assembly-CSharp" expanded="True">
+            <Node name="Assets" expanded="True">
+              <Node name="Player" expanded="True">
+                <Node name="HUD" expanded="True" />
+              </Node>
+              <Node name="RTS" expanded="True">
+                <Node name="Verticle.cs" selected="True" />
+              </Node>
+              <Node name="WorldObject" expanded="True">
+                <Node name="Building" expanded="True" />
+              </Node>
+            </Node>
+          </Node>
+        </State>
+      </Pad>
+      <Pad Id="ClassPad">
+        <State expanded="True">
+          <Node name="Assembly-CSharp" expanded="True">
+            <Node name="Buildings" selected="True" />
+          </Node>
+        </State>
+      </Pad>
+      <Pad Id="MonoDevelop.Debugger.WatchPad">
+        <State>
+          <Value>TempMeshTrinaglesArray</Value>
+        </State>
+      </Pad>
+    </Pads>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore>
+      <Catchpoint exceptionName="System.InvalidOperationException" />
+      <Catchpoint exceptionName="System.ArgumentOutOfRangeException" />
+      <Catchpoint exceptionName="System.IndexOutOfRangeException" />
+      <Catchpoint exceptionName="System.StackOverflowException" />
+    </BreakpointStore>
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+</Properties>
