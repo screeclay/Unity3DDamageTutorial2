@@ -19,10 +19,14 @@ namespace RTS{
 		public bool IsATwin = false;
 		
 		private float health;
-		private bool TryingToBeFired = false;
+		private float TryingToBeFired = 0f;
 		
 		
 		public void Update(){
+			if(health == 9999f){//it is still unassigned
+				health = CalculateHealth();
+			}
+			
 			if(state == VerticleState.Destroyed){
 				return;
 			}
@@ -43,7 +47,7 @@ namespace RTS{
 				TryToFireLinkedAliasesFromOtherBranches();
 			}
 			
-			if(TryingToBeFired&&state != VerticleState.Burning){
+			if((TryingToBeFired>=1f)&&state != VerticleState.Burning){
 				state = VerticleState.Burning;	
 			}
 				
@@ -65,7 +69,7 @@ namespace RTS{
 			Aliases = new List<int>();
 			state = VerticleState.Standard;
 			positionAbsolute = Vector3.zero;
-			health = 1.0f;
+			health = 9999f;
 			LinksToOtherBranches = new List<int>();
 		}
 		
@@ -103,6 +107,16 @@ namespace RTS{
 				TempNormal += OwnerManager.mesh.normals[k];
 			}
 			normal = TempNormal/(Aliases.Count);	
+		}
+		
+		private float CalculateHealth(){
+			float sum = 0f;
+			foreach(int i in LinkedAliases){
+				sum += Vector3.Distance(positionRelative, OwnerManager.Aliases[i].positionRelative);	
+			}
+			
+			return sum/LinkedAliases.Count*OwnerManager.AliasHealthParameter;
+			
 		}
 		
 		public void AddTriangle(int i, Vector3 vert){//vert is a vector with aliases of vector participating in triangle
@@ -212,19 +226,23 @@ namespace RTS{
 		}
 		
 		public void StartFire(){ 
-			if(!TryingToBeFired){
-				TryingToBeFired = true;
-			}
+					TryingToBeFired = 1.1f; // so fire will start in next update
+		}
+		
+		public void TryToStartFire(){
+			if(TryingToBeFired <= 1f){	
+					TryingToBeFired += Random.value * OwnerManager.TryingToBeFiredParameter;
+			}			
 		}
 		
 		public void InflictDamage(){
-			health -= 0.5f;
+			health -= 0.5f*OwnerManager.InflictDamageParameter;
 		}
 		
 		public void TryToFireLinkedAliases(){
 			//OwnerManager.FireAliasesBySphere(positionRelative);
 			foreach(int k in LinkedAliases){
-					OwnerManager.Aliases[k].StartFire();
+					OwnerManager.Aliases[k].TryToStartFire();
 			}
 		}
 		
@@ -234,7 +252,7 @@ namespace RTS{
 			}
 		}
 		
-		private void ProduceTrianglesBetweenWalls(){//fills the void between Alias and its twin
+		public void ProduceTrianglesBetweenWalls(){//fills the void between Alias and its twin
 		
 			int[] TempListOfAliasNumbers= new int[2];  //Stores the numbers of other (not this) aliases that form a triangle
 			int DestroyedAliasPosition = 0;
@@ -295,7 +313,7 @@ namespace RTS{
 			
 		}
 		 
-		private void DebEnlightenThisAlias(){
+		public void DebEnlightenThisAlias(){
 			Vector3 pos = positionAbsolute;
 			Debug.DrawLine (Vector3.zero, pos, Color.red);
 			Debug.Break();

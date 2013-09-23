@@ -34,17 +34,27 @@ public class MeshManager {//for each meshfilter there should be an distinct mesh
 	private int NumberOfGroundAliases = 0;
 	private int[] AliasToBranchArray;
 	
+	public float AliasHealthParameter = 30f;
+	public float InflictDamageParameter = 0.25f;
+	public float TryingToBeFiredParameter = 1f;
+	private List <Vector2> PlannedTrianglesToBeMadeBetweenAliasAndTwin;
+	
 	public MeshManager (ref MeshFilter meshFilter){//constructor
 		Initialise();
+		
 		ParentPosition = meshFilter.transform.position;
 		filter = meshFilter;
 		mesh = meshFilter.mesh;
+		
 		ManageVerticles(mesh.vertices);
 		ManageTriangles(mesh.triangles);
 		CalcualateMinimumHeight();
 		CalculateNormals();
+		
 		FindAliasesBranches();
+		CheckUnClosedMeshes(); 
 		MakeMeshThick();	
+		ProducePlannedTrianglesBetweenAliasAndTwin();
 	}
 	
 
@@ -54,6 +64,7 @@ public class MeshManager {//for each meshfilter there should be an distinct mesh
 		Triangles = new List<Vector3>();
 		meshState = VerticleState.Standard;
 		WallsWaitingToBeMade = new List<int>();
+		PlannedTrianglesToBeMadeBetweenAliasAndTwin = new List<Vector2>();
 	}
 	
 	private void ManageVerticles(Vector3[] verticles){//fnction find where many verticles are in the same positions and in that way produces its aliases
@@ -276,7 +287,7 @@ public class MeshManager {//for each meshfilter there should be an distinct mesh
 		Vector3[] OldVerticleList = mesh.vertices;
 		Vector3[] NewVerticleList = new Vector3[OldVerticleList.Length];
 				
-		float Wall_Thickness = 0.005f;
+		float Wall_Thickness = 0.01f;
 		Vector3 TargetPosition;
 		Vector3 NewPosition ;
 
@@ -521,5 +532,90 @@ public class MeshManager {//for each meshfilter there should be an distinct mesh
 		
 	}
 	////////////////////////////////////	LookingForBranchconnectionsEndshere
+	
+	///////////////////////////////////     Checking unended mesh-parts starts here
+	
+	private void CheckUnClosedMeshes(){//tutorial, part X
+		//Okay, what do we need? We need a list of edges that belond to only one triangle!
+		Dictionary <float, Vector3> EdgesList = new Dictionary<float, Vector3>(); //This is intresting. When we will add new edges, we will duplicate some data
+			//So how to find duplicates? I decided to use Dictionary. We will be given a "edge data" consisting of two Alias numbers. They will form Vector3.x and Vector3.y
+			//Using them we are going to form a  (float) key that will be diffrent for every two diffent numbers (Alias numbers). Vector3.z will be the number of times this edge will appear
+			//than by checking the Vector3.z data we will find duplicates.
+		
+		foreach(Vector3 tri in Triangles){ // as we know, in each traingle there are three edges. Moreover data in Traingles is stored as verticles, not triangles data
+			TryToAddEdgeToEdgesDictionary( VerticleToAliasArray[ (int) tri.x ], VerticleToAliasArray[ (int) tri.y ], EdgesList);
+			TryToAddEdgeToEdgesDictionary( VerticleToAliasArray[ (int) tri.y ], VerticleToAliasArray[ (int) tri.z ], EdgesList);
+			TryToAddEdgeToEdgesDictionary( VerticleToAliasArray[ (int) tri.x ], VerticleToAliasArray[ (int) tri.z ], EdgesList);
+		}
+	
+		
+		
+		//Okay, lets find the edges which are in only one triangle
+		foreach( KeyValuePair<float, Vector3> pair in EdgesList){
+		
+			if(pair.Value.z == 0){
+				AddToPlannedTrianglesBetweenAliasAndTwin( (int)	pair.Value.x, (int) pair.Value.y);
+			}
+		}
+		
+	}
+	
+	private float ProduceSeed(int x, int y){// unique seed of two ints
+		int a, b;
+		if(x>y){ a = x; b = y;}
+		else { a = y; b = x ;}//these manevuers are made to produce seed identical no mater in what order the parameters were send. When we give alias numbers 12 and 15 or 15 and 12 the same effect will happen
+		
+		return (a * Aliases.Count + b  );// Not sure how random it is, hope that enough random	
+	}
+	
+	private KeyValuePair<float, Vector3> MakeOneEdgeToDictionary(int x, int y){//does what name says, used in CheckUnClosedMeshes method
+		return new KeyValuePair<float, Vector3>( ProduceSeed(x,y) , new Vector3(x, y, 0)); //As number of times the edge was found (Vector3.z) zero is now given. Has to be modified in caller method!
+	}
+	
+	private void TryToAddEdgeToEdgesDictionary(int x, int y, Dictionary<float, Vector3> EdgesList){ //given numbers are alias numbers
+		if( x == y ){//Sometimes happen, but should not. Anyway, calculating anything then has no point
+			return;
+		}
+		
+		KeyValuePair<float, Vector3> Temp;
+		Temp = MakeOneEdgeToDictionary(x, y) ;
+		if(EdgesList.ContainsKey(Temp.Key)){ //check is this pair was arleady added. If so, increment Vector3.z Else, add this edge
+			Vector3 Current = EdgesList[Temp.Key]; 
+			Current.z = Current.z +1;
+			EdgesList[Temp.Key] = Current;
+		}else{
+			EdgesList.Add(Temp.Key, Temp.Value); 
+		}
+	}
+	
+	private void AddToPlannedTrianglesBetweenAliasAndTwin(int x, int y){//we want to store data about which new edges has to produce walls.
+		//this is becouse calculating this edges is done BEFORE making Mesh Thick. As in making walls we use twins, it has to be done later,
+		//after meshes twins are placed. This wall making is done in ProducePlannedTrianglesBetweenWalls
+		PlannedTrianglesToBeMadeBetweenAliasAndTwin.Add( new Vector2( x, y ) );
+	}
+	
+	
+	private void ProducePlannedTrianglesBetweenAliasAndTwin(){
+		if(IsMeshThick == false){
+			Debug.Log("Mesh is not thick. Becouse of that I cannot make triangles as there is not twins! ");
+			return;	
+		}else{
+			foreach(Vector2 vec in PlannedTrianglesToBeMadeBetweenAliasAndTwin){//Procedures similar to ones used in Verticle class, during wall-making after a destruction of Alias
+				AddWallToWallsList( (int) vec.x						, (int) vec.y					, (int) vec.x + Aliases.Count/2);
+				AddWallToWallsList( (int) vec.y						, (int) vec.x + Aliases.Count/2	, (int) vec.y + Aliases.Count/2);
+				AddWallToWallsList( (int) vec.x + Aliases.Count/2	, (int) vec.y					, (int) vec.x );
+				AddWallToWallsList( (int) vec.y + Aliases.Count/2	, (int) vec.x + Aliases.Count/2	, (int) vec.y );
+				
+			}
+			
+			MakeWallsFromList();
+			UpdateTrianglesList();
+			TranslateFromMeshToManager();
+			
+		}
+		
+	}
+	
+	
 }
 	
