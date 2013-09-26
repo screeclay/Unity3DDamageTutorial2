@@ -8,7 +8,7 @@ public class MeshManager {//for each meshfilter there should be an distinct mesh
 	
 	public Mesh mesh;
 	private MeshFilter filter;
-	public Vector3 ParentPosition;
+	public Transform ParentTransform; // we will need some functions from this, thus I dont use just parentPosition or parentRotation
 	public List<Verticle> Aliases;
 	public int[] VerticleToAliasArray;//the index is vert number, in its there is the number of its alias, its size is the number of veerticles
 	public List<Vector3> Triangles;
@@ -20,6 +20,7 @@ public class MeshManager {//for each meshfilter there should be an distinct mesh
 	private VerticleState meshState;
 	private float time = 0;
 	public int OrgTriangleCount = 0;
+	private int NumberOfFillingTraingles = 0;
 	
 	public bool IsMeshThick = false;
 	
@@ -42,7 +43,7 @@ public class MeshManager {//for each meshfilter there should be an distinct mesh
 	public MeshManager (ref MeshFilter meshFilter){//constructor
 		Initialise();
 		
-		ParentPosition = meshFilter.transform.position;
+		ParentTransform = meshFilter.transform;
 		filter = meshFilter;
 		mesh = meshFilter.mesh;
 		
@@ -50,11 +51,14 @@ public class MeshManager {//for each meshfilter there should be an distinct mesh
 		ManageTriangles(mesh.triangles);
 		CalcualateMinimumHeight();
 		CalculateNormals();
+		SetGroundAliases(0.1f);
 		
 		FindAliasesBranches();
 		CheckUnClosedMeshes(); 
 		MakeMeshThick();	
 		ProducePlannedTrianglesBetweenAliasAndTwin();
+		
+		CheckInitialHoveringMeshes();
 	}
 	
 
@@ -241,23 +245,33 @@ public class MeshManager {//for each meshfilter there should be an distinct mesh
 		
 		DebDestroyCount = 0;
 		DebDestroyTime = 0;
-		
-		
-		if(time>1){
+
+		/*if(time>1){
 			for(int k=0; k<Aliases.Count;k++){
 				Aliases[k].Update();
 			}
 			time = 0;
 		}else{
 			time += Time.deltaTime;	
-		}
+		}*/ ;
 		
+			for(int k=0; k<Aliases.Count/2;k++){
+				Aliases[k].Update();
+			}
 
 		if(MeshWasChanged){
 			
+			ManageHoveringParts();
 			MakeWallsFromList();
 			UpdateTrianglesList();
 			TranslateFromMeshToManager();
+			
+			bool result = DestroyPlanks();
+			if( result ){
+				ManageHoveringParts();
+				UpdateTrianglesList();
+				TranslateFromMeshToManager();
+			}
 			MeshWasChanged = false;
 
 		}
@@ -410,7 +424,8 @@ public class MeshManager {//for each meshfilter there should be an distinct mesh
 		DebDestroyTime += (Time.realtimeSinceStartup - time);
 	}
 	
-	private void SetGroundAliases(float percent){
+	private void SetGroundAliases(float percent){//You give the percent of height from which Aliases becomes Ground-Aliases. 0.1f makes lowest 10% of Aliases a Ground-Aliases
+		percent = 1 - percent;
 		float CuttingPosition = MaximumHeight - (MaximumHeight-MinimumHeight)*percent;
 		foreach(Verticle v in Aliases){
 			if(v.positionAbsolute.y<CuttingPosition){
@@ -605,7 +620,7 @@ public class MeshManager {//for each meshfilter there should be an distinct mesh
 				AddWallToWallsList( (int) vec.y						, (int) vec.x + Aliases.Count/2	, (int) vec.y + Aliases.Count/2);
 				AddWallToWallsList( (int) vec.x + Aliases.Count/2	, (int) vec.y					, (int) vec.x );
 				AddWallToWallsList( (int) vec.y + Aliases.Count/2	, (int) vec.x + Aliases.Count/2	, (int) vec.y );
-				
+				NumberOfFillingTraingles += 4; //for us to know how much of these was added (now 4 per wall)
 			}
 			
 			MakeWallsFromList();
@@ -616,6 +631,152 @@ public class MeshManager {//for each meshfilter there should be an distinct mesh
 		
 	}
 	
+	////////////////////////Now checking which parts of mesh are "Hovering"
+	private void ManageHoveringParts(){
+		if( NumberOfGroundAliases == 0 ){//without groud aliases everything would fall, so there is no point in calculating
+			return;
+		}
+		List<int> HoveringAliases = FindHoveringAliases();
+		
+		foreach(int i in HoveringAliases){
+			Aliases[i].ImmediatelyDestroy();	
+		}
+		//We dont have to update mesh.traingles of Traingles List here as it will be called after this function is started
+		//And in Alises we use just LinkedAliases and LinksToOtherBranches which are updated on-spot
+	}
+	
+	private List<int> FindHoveringAliases(){//returns list containing numbers of Aliases that doesn't have connections to the GroundAliases
+		List<int> OutList = new List<int>();
+		List<int> AliasesArleadyChecked = new List<int>();
+		
+		int HowManyAliasesToCheck;
+		if( IsMeshThick ){ HowManyAliasesToCheck = Aliases.Count/2; } else { HowManyAliasesToCheck = Aliases.Count; }//I just dont want to check twins, as they do the same as Aliases they are connected to
+		
+		for( int i = 0; i<Aliases.Count; i++ ){//lets check all aliases, foreach loop is not necessary here
+			bool ThereIsGroundAlias = false; 
+			if( !AliasesArleadyChecked.Contains(i) ){
+				List<int> AliasesCurrentlyChecked = new List<int>();//a list of Aliases that are checked this time for-loop is made.
+				
+				CheckForGroundAliasesAndSentFurther(i, AliasesArleadyChecked, AliasesCurrentlyChecked, ref ThereIsGroundAlias);	
+				
+				if(ThereIsGroundAlias == false){ 
+					OutList = OutList.Concat(AliasesCurrentlyChecked).ToList();	
+				}
+			}
+		}
+		return OutList;
+	}
+	
+	//Function similar to the GetConnectionNumber method, but we check the LinksFromOtherBranches also
+	private void CheckForGroundAliasesAndSentFurther(int NumberBeingChecked, List<int> AliasesArleadyChecked, List<int> AliasesThatAreCheckInThisLoop, ref bool ThereIsGroundAlias){
+		if( !Aliases[NumberBeingChecked].IsATwin ){//We shoudnt check twins, as they are just like its Main Alias
+			AliasesThatAreCheckInThisLoop.Add(NumberBeingChecked);
+			AliasesArleadyChecked.Add (NumberBeingChecked);//telling that we checked it		
+			
+			if( Aliases[NumberBeingChecked].state == VerticleState.Ground ){//checking
+				ThereIsGroundAlias = true;	
+			}
+			
+			foreach(int i in Aliases[NumberBeingChecked].LinkedAliases){//Sending further (if necessary)
+				if( !AliasesArleadyChecked.Contains(i) ){
+					CheckForGroundAliasesAndSentFurther(i, AliasesArleadyChecked, AliasesThatAreCheckInThisLoop, ref ThereIsGroundAlias);	
+				}
+			}
+			
+			foreach(int i in Aliases[NumberBeingChecked].LinksToOtherBranches){//Again Sending further (if necessary)
+				if( !AliasesArleadyChecked.Contains(i) ){
+					CheckForGroundAliasesAndSentFurther(i, AliasesArleadyChecked, AliasesThatAreCheckInThisLoop, ref ThereIsGroundAlias);	
+				}
+			}
+		}
+	}
+	
+	//check if there are hovering meshes now, and some parts of building would immediately fall
+	private void CheckInitialHoveringMeshes(){
+		if( NumberOfGroundAliases == 0 ){//without groud aliases everything would fall, so there is no point in calculating
+			return;
+		}
+		List<int> HoveringAliases = FindHoveringAliases();
+		if(HoveringAliases.Count>0){
+			Debug.Log("Some parts of mesh are Now Hovering! It is not good... :( ");	
+		}
+	}
+	
+	///////////////////////////
+	//Now finding "Planks", tutorial part XI
+	private bool DestroyPlanks(){
+		//Anyway, Planks are the only two-sided triangles except for the "Filling traingles", but we are not checking them
+		//as we are only checking with traingles with numbers higher
+		
+		Dictionary<float, List<int> > DictionaryOfWalls = new Dictionary<float,  List<int> >();//Similar to finding edges, isn't it.
+		//Well, now we are going check pair of Aliases used in walls. If the same pair of Aliases was used twice, it is a "plank"
+		//Kay will be produced from Aliases numbers, and List will store the numbers of triangles
+		
+		
+		for(int i = (Triangles.Count - ( NumberOfFillingTraingles/3 ) ); i<Triangles.Count; i++){//these calculations I mean checking the "walls"
+			Vector2 Aliases = GetAliasesNumbersFromTraingle( Triangles[i] );
+			if(Aliases == Vector2.zero){
+				//Do nthing	
+			}else{
+				float key = ProduceSeed( (int) Aliases.x, (int) Aliases.y );
+				if( DictionaryOfWalls.ContainsKey(key) ){
+					DictionaryOfWalls[key].Add(i);	
+				}else{
+					DictionaryOfWalls.Add (key, new List<int>() );
+					DictionaryOfWalls[key].Add (i);
+				}
+			}
+		}
+		int[] NewTrianglesList = new int[mesh.triangles.Length]; //list on which we will perform modifications
+		mesh.triangles.CopyTo(NewTrianglesList,0);
+		bool modified = false;
+		
+		foreach(KeyValuePair< float, List<int> > pair in DictionaryOfWalls){
+			if(pair.Value.Count>1){ 
+				modified = true;
+				foreach(int i in pair.Value){
+					//We cannot just modify Triangles List as UpdateTrianglesList modifies only the Original Traingles (not walls or filling ones)
+					NewTrianglesList[i*3  ] = 0;
+					NewTrianglesList[i*3+1] = 0;
+					NewTrianglesList[i*3+2] = 0;
+					//Well, now intresting thing. We deleted the triangle with two Aliases. But what with the one with two twins and one alias???
+					//Intresting thing: The traingle with two twins in added directly After the one with 2 Aliases and one twin.
+					NewTrianglesList[i*3+3] = 0;
+					NewTrianglesList[i*3+4] = 0;
+					NewTrianglesList[i*3+5] = 0;
+				}
+			}
+		}
+		
+		if(modified == true){ 
+		 mesh.triangles = NewTrianglesList;	
+		}
+		
+		return modified;
+	}
+	
+	private Vector2 GetAliasesNumbersFromTraingle(Vector3 vec){//returns Two numbers which are NOT twins numbers, or Vector2.zero if there was only one Alias and two twins in Traingle
+		if(vec == Vector3.zero){//its arleady destroyed, no point in continuing
+			return Vector2.zero;
+		}
+		
+		int[] TempArray = new int[3]; //3 not 2 is becouse sometimes there might be errors when  triangle with 3 normal aliases was given
+		int HowManyAliasesWeArleadyHave = 0;
+		for(int i=0; i<3; i++){
+			if( VerticleToAliasArray[ (int) vec[i] ] < Aliases.Count/2 ){
+				TempArray[HowManyAliasesWeArleadyHave] = VerticleToAliasArray[ (int) vec[i] ];
+				HowManyAliasesWeArleadyHave++;
+			}
+		}
+		if(HowManyAliasesWeArleadyHave == 3){
+			Debug.Log("A good Traingle was passed: It had 3 Aliases and 0 Twins");
+			return Vector2.zero;
+		}else if(HowManyAliasesWeArleadyHave == 2){
+			return new Vector2(	TempArray[0], TempArray[1]);
+		}else{
+			return Vector2.zero;
+		}
+	}
 	
 }
 	

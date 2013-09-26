@@ -22,7 +22,7 @@ namespace RTS{
 		private float TryingToBeFired = 0f;
 		
 		
-		public void Update(){
+		public void Update(){ 
 			if(health == 9999f){//it is still unassigned
 				health = CalculateHealth();
 			}
@@ -91,9 +91,8 @@ namespace RTS{
 		}
 		
 		public void SetPositionAbsolute(){
-			positionAbsolute = 	OwnerManager.ParentPosition;
-			positionAbsolute = positionAbsolute + positionRelative;
-			
+			positionAbsolute = OwnerManager.ParentTransform.TransformPoint(positionRelative);
+
 		}
 		
 		public void SetPositionRelative(Vector3 Pos){
@@ -164,6 +163,25 @@ namespace RTS{
 			}
 		}
 		
+		public void ImmediatelyDestroy(){//don,t bother sending info to other aliases, just change Traingles list in MeshManager and verticleState
+			DestroyTriangles();
+			state = VerticleState.Destroyed;
+			
+			for(int i = 0; i<LinkedAliases.Count; i++){
+				OwnerManager.Aliases[  LinkedAliases[i]  ].RemoveLink(number);
+				foreach(int l in Triangles){
+					OwnerManager.Aliases[  LinkedAliases[i]  ].RemoveLink(number);
+				}
+				RemoveLink(  LinkedAliases[i]  );
+				
+			}
+			RemoveAllLinksToOtherBranches();
+			
+			if((OwnerManager.IsMeshThick==true)&&IsATwin==false){	//send info to twin
+					OwnerManager.Aliases[number+(OwnerManager.Aliases.Count/2)].ImmediatelyDestroy();	
+			}
+		}
+		
 		private void Destroy(){
 			//if(number==100){Debug.Log("Linked Alias is "+LinkedAliases[1]);}
 			OwnerManager.MeshWasChanged = true;
@@ -177,6 +195,7 @@ namespace RTS{
 					OwnerManager.Aliases[  LinkedAliases[i]  ].RemoveLink(number);
 				}
 				RemoveLink(  LinkedAliases[i]  );
+				
 			}
 			RemoveAllLinksToOtherBranches();
 			
@@ -298,8 +317,9 @@ namespace RTS{
 
 		}
 		
+		
 		private void DebEnlightenAVert(int i, Color col){
-			Vector3 pos = (OwnerManager.mesh.vertices[i] + OwnerManager.ParentPosition);
+			Vector3 pos = (OwnerManager.mesh.vertices[i] + OwnerManager.ParentTransform.position);
 			Debug.DrawLine (Vector3.zero, pos, col);
 		}
 		

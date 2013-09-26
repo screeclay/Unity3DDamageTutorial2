@@ -46,8 +46,13 @@ public class Building : WorldObject {
 		base.Update();
 		ProcessBuildQueue();
 		
-		for(int i=0; i<meshManagers.Count;i++){
+		/*for(int i=0; i<meshManagers.Count;i++){
 				meshManagers[i].TellAliasesToUpdate();
+		}*/
+		if( Input.GetKey(KeyCode.A) ){
+			for(int i=0; i<meshManagers.Count;i++){
+					meshManagers[i].TellAliasesToUpdate();
+			}	
 		}
 	}
 	

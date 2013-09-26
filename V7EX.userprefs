@@ -2,12 +2,15 @@
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
   <MonoDevelop.Ide.Workbench ActiveDocument="Assets\WorldObject\Building\MeshManager.cs">
     <Files>
-      <File FileName="Assets\WorldObject\Building\MeshManager.cs" Line="594" Column="72" />
-      <File FileName="Assets\RTS\Verticle.cs" Line="265" Column="3" />
+      <File FileName="Assets\WorldObject\Building\MeshManager.cs" Line="706" Column="42" />
+      <File FileName="Assets\RTS\Verticle.cs" Line="121" Column="94" />
+      <File FileName="Assets\WorldObject\Building\Building.cs" Line="52" Column="33" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
-    <BreakpointStore />
+    <BreakpointStore>
+      <Catchpoint exceptionName="System.IndexOutOfRangeException" />
+    </BreakpointStore>
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
   <MonoDevelop.Ide.DebuggingService.PinnedWatches />
 </Properties>

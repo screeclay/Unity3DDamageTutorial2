@@ -198,7 +198,7 @@ public class UserInput : MonoBehaviour {
 
 	}
 	
-	private void MiddleMouseUnClick(){Debug.Log("LOL");
+	private void MiddleMouseUnClick(){
 		GameObject hitObject = WorkManager.FindHitObject(Input.mousePosition);
 			Vector3 hitPoint = WorkManager.FindHitPoint(Input.mousePosition);
 			if(hitObject && hitPoint != ResourceManager.InvalidPosition) {
