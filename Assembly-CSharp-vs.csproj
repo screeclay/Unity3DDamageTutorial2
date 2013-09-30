@@ -59,6 +59,9 @@
      <Compile Include="Assets\ScriptSelectedObjects.cs" />
      <Compile Include="Assets\WorldObject\Building\Building.cs" />
      <Compile Include="Assets\WorldObject\Building\Buildings.cs" />
+     <Compile Include="Assets\WorldObject\Building\FireDamageProperties.cs" />
+     <Compile Include="Assets\WorldObject\Building\FireDamageStructures.cs" />
+     <Compile Include="Assets\WorldObject\Building\GeneralFireDamageManager.cs" />
      <Compile Include="Assets\WorldObject\Building\MeshManager.cs" />
      <Compile Include="Assets\WorldObject\Building\Refinery\Refinery.cs" />
      <Compile Include="Assets\WorldObject\Building\WarFactory\WarFactory.cs" />
@@ -73,6 +76,23 @@
      <Compile Include="Assets\WorldObject\Unit\Units.cs" />
      <Compile Include="Assets\WorldObject\Unit\Worker\Worker.cs" />
      <Compile Include="Assets\WorldObject\WorldObject.cs" />
+     <None Include="Assets\Glowing Things\FunkyThingsComposite.shader" />
+     <None Include="Assets\Edge Detection\EdgeDetectNormals.shader" />
+     <None Include="Assets\Glowing Things\FunkyVertexLit.shader" />
+     <None Include="Assets\Show UV Mapping\ShowUVMapping.shader" />
+     <None Include="Assets\Show RenderTypes\ShowRenderTypes.shader" />
+     <None Include="Assets\Show Overdraw\RenderOverdrawZ.shader" />
+     <None Include="Assets\Glowing Things\RenderFunkyThings.shader" />
+     <None Include="Assets\Common Assets\RenderDepth.shader" />
+     <None Include="Assets\Show Overdraw\RenderOverdraw.shader" />
+     <None Include="Assets\Common Assets\RenderNormalsAndDepth.shader" />
+ <Reference Include="Assembly-UnityScript-firstpass">
+ <HintPath>Library\ScriptAssemblies\Assembly-UnityScript-firstpass.dll</HintPath>
+ </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="Assembly-CSharp-firstpass-vs.csproj">
+      <Project>{6922A64A-F530-D50C-4B1F-0D4DDF3CD8EF}</Project>      <Name>Assembly-CSharp-firstpass-vs</Name>    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

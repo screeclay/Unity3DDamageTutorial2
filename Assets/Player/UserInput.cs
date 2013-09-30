@@ -264,7 +264,7 @@ public class UserInput : MonoBehaviour {
 
 		Building selectedBuilding = worldObject.GetComponent<Building>();
 			if(selectedBuilding){
-				selectedBuilding.FireDamage();
+				
 			}
 	}
 	

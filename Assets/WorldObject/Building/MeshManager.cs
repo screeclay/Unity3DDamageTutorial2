@@ -6,6 +6,9 @@ using RTS;
 
 public class MeshManager {//for each meshfilter there should be an distinct meshManager
 	
+	public int number;
+	public GeneralFireDamageManager ownerManager;
+	Vector3 CenterOfGravity = new Vector3(0f,0f,0f);
 	public Mesh mesh;
 	private MeshFilter filter;
 	public Transform ParentTransform; // we will need some functions from this, thus I dont use just parentPosition or parentRotation
@@ -40,7 +43,14 @@ public class MeshManager {//for each meshfilter there should be an distinct mesh
 	public float TryingToBeFiredParameter = 1f;
 	private List <Vector2> PlannedTrianglesToBeMadeBetweenAliasAndTwin;
 	
-	public MeshManager (ref MeshFilter meshFilter){//constructor
+	public MeshManager ( MeshFilter meshFilter, GeneralFireDamageManager XownerManager, int XNumber, MeshManagerProperties XProperties){//constructor
+		ownerManager = XownerManager ;
+		number = XNumber;
+		AliasHealthParameter = XProperties.AliasHealthParameter;//setting the given parameters.
+		InflictDamageParameter = XProperties.InflictDamageParameter;
+		TryingToBeFiredParameter = XProperties.TryingToBeFiredParameter;
+		IsMeshThick = XProperties.MakeMeshThick;
+		
 		Initialise();
 		
 		ParentTransform = meshFilter.transform;
@@ -51,6 +61,7 @@ public class MeshManager {//for each meshfilter there should be an distinct mesh
 		ManageTriangles(mesh.triangles);
 		CalcualateMinimumHeight();
 		CalculateNormals();
+		CalculateCenterOfGravity();
 		SetGroundAliases(0.1f);
 		
 		FindAliasesBranches();
@@ -156,6 +167,14 @@ public class MeshManager {//for each meshfilter there should be an distinct mesh
 			if(vert.positionAbsolute.y < MinimumHeight){ MinimumHeight = vert.positionAbsolute.y;}
 			if(vert.positionAbsolute.y > MaximumHeight){ MaximumHeight = vert.positionAbsolute.y;}
 		}
+	}
+	
+	public void CalculateCenterOfGravity(){
+		Vector3 Temp = Vector3.zero;
+		foreach(Verticle vec in Aliases){
+			Temp += vec.positionAbsolute;
+		}
+		CenterOfGravity = Temp/Aliases.Count();
 	}
 	
 	public void CalculateNormals(){//Counting absolute minimum and maximum height of verticle in the mesh
@@ -777,6 +796,8 @@ public class MeshManager {//for each meshfilter there should be an distinct mesh
 			return Vector2.zero;
 		}
 	}
+	
+	
 	
 }
 	

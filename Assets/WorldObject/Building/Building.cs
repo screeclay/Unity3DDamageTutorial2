@@ -14,6 +14,7 @@ public class Building : WorldObject {
 	private bool needsBuilding = false;
 	
 	public List<MeshManager> meshManagers;
+
 	
 	private float[][] MinimumHeights ;
 	private float MinimumHeight = 1000;
@@ -37,23 +38,12 @@ public class Building : WorldObject {
 	
 	protected override void Start () {
 		base.Start();
-		//CalcualateMinimumHeight();
-		InitialiseMeshMenagers();
-
 	}
 	
 	protected override void Update () {
 		base.Update();
 		ProcessBuildQueue();
 		
-		/*for(int i=0; i<meshManagers.Count;i++){
-				meshManagers[i].TellAliasesToUpdate();
-		}*/
-		if( Input.GetKey(KeyCode.A) ){
-			for(int i=0; i<meshManagers.Count;i++){
-					meshManagers[i].TellAliasesToUpdate();
-			}	
-		}
 	}
 	
 	protected override void OnGUI() {
@@ -175,112 +165,6 @@ public class Building : WorldObject {
 		CalculateCurrentHealth(0.5f, 0.99f);
 		DrawHealthBar(selectBox, "Building ...");
 	}
-	
-	private void InitialiseMeshMenagers(){
-		meshManagers = new List<MeshManager>();
-		MeshFilter[] myMeshFilters = GetComponentsInChildren<MeshFilter>();
-		for(int i=0; i<myMeshFilters.Length;i++){
-			if(myMeshFilters[i].mesh.triangles.Length>0){
-				meshManagers.Add(new MeshManager(ref myMeshFilters[i]));
-			}
-		}
-	}
-	
-	public void FireDamage(){//changing height of every verticle!, going down
-		foreach(MeshManager manager in meshManagers){
-			//manager.DestroyByNumber(88);
-
-			manager.FFire(10);
-
-		}
-		/*int j=0;
-		MeshFilter[] myMeshFilters = GetComponentsInChildren<MeshFilter>();
-		//meshManager = new MeshManager(myMeshFilters[0]);
-		
-		foreach(MeshFilter meshFilter in myMeshFilters){
-			Vector3[] verticles = meshFilter.mesh.vertices;
-			Vector3 ParentPosition = meshFilter.transform.position;
-			Vector3 LastPosition = new Vector3(0,0,0);
-			//Debug.Log(meshFilter.mesh.triangles.Length);	
-
-			int i = 0;
-			
-			while(i< verticles.Length){
-				if(verticles[i].y+0.3f<OrgVerticles[j,i].y){
-					verticles[i] = LastPosition;
-				}else{
-						verticles[i].y -= Mathf.PerlinNoise(verticles[i].y+ParentPosition.y+verticles[i].x+ParentPosition.x, verticles[i].z+ParentPosition.z)*0.1f;
-						//Well, U can ast why hese perlinNoises and other stuff. Well it is becouse the In every triangle of mesh there are 3 separate verticles. That mean that in Tetrahedron there are 12 verticles instead of 4.
-						// i 'd use Random on everyone, they would simply split up. I want when in the same place there are 3 verticles to every verticle move in the same (random) way.
-					LastPosition = verticles[i];
-				}
-				i++;
-			}
-			meshFilter.mesh.vertices = verticles;
-			j++;
-		}*/
-		
-	}
-	
-	/*public void CalcualateMinimumHeight(){//Wyliczanie absolutnego najniższego i najwyzszego miejsca w pferabie, oraz miejsc gdzie najnizej moze byc dany verticle!
-		MeshFilter[] myMeshFilters = GetComponentsInChildren<MeshFilter>();
-		
-		int i = 0;
-		int j = 0; //number meshfiltru!
-		int FullNumberOfVerticles = 0;
-		
-		foreach(MeshFilter meshFilter in myMeshFilters){//we count how many meshes and verticles in meshes there are
-			Vector3[] verticles = meshFilter.mesh.vertices;	
-			while(i< verticles.Length){
-				i++;
-			}
-			j++;
-		}
-		NumOfMeshfilters = j;
-		
-		OrgVerticles = new Vector3[j,i];
-		i = 0;
-		j = 0;
-		
-		
-		foreach(MeshFilter meshFilter in myMeshFilters){	//we calculate the org positions of verticles, 
-			i = 0;
-			triangles = meshFilter.mesh.triangles;
-			Vector3[] verticles = meshFilter.mesh.vertices;	
-			while(i< verticles.Length){
-				OrgVerticles[j,i] = verticles[i];
-				i++;
-				FullNumberOfVerticles++;
-			}
-			j++;
-		}
-		
-
-		VerticleState = new int[FullNumberOfVerticles];
-		//set every part of verticlestate to 0, cous nothin in being on fire!
-		foreach(int k in VerticleState){
-			VerticleState[k] = 0;	
-		}
-		
-		
-		foreach(MeshFilter meshFilter in myMeshFilters){
-			i = 0;
-			Vector3[] verticles = meshFilter.mesh.vertices;	
-			Vector3 ParentPosition = meshFilter.transform.position;
-			while(i< verticles.Length){
-				if(verticles[i].y+ParentPosition.y < MinimumHeight){ MinimumHeight = verticles[i].y+ParentPosition.y;}
-				if(verticles[i].y+ParentPosition.y > MaximumHeight){ MaximumHeight = verticles[i].y+ParentPosition.y;}
-				i++;
-			}
-	 	
-		}
-		
-		
-		
-		
-	}*/
-	
-	
 	
 	
 }

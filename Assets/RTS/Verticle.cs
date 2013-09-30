@@ -20,6 +20,7 @@ namespace RTS{
 		
 		private float health;
 		private float TryingToBeFired = 0f;
+		private bool  IsInInterMeshLink = false;	
 		
 		
 		public void Update(){ 
@@ -49,6 +50,7 @@ namespace RTS{
 			
 			if((TryingToBeFired>=1f)&&state != VerticleState.Burning){
 				state = VerticleState.Burning;	
+				OwnerManager.ownerManager.StartFireOfVerticleInInterMeshConnection(OwnerManager.number, number);
 			}
 				
 		}
@@ -317,6 +319,9 @@ namespace RTS{
 
 		}
 		
+		public void TellThatMakesInterBranchConnections(){
+			IsInInterMeshLink = true;	
+		}
 		
 		private void DebEnlightenAVert(int i, Color col){
 			Vector3 pos = (OwnerManager.mesh.vertices[i] + OwnerManager.ParentTransform.position);
